@@ -16,7 +16,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(135deg, #ffb6c1, #ffc0cb);
+      background: linear-gradient(135deg, #ff6f91, #ff9ab8); /* darker + brighter pink */
       overflow: hidden;
       display: flex;
       justify-content: center;
@@ -26,7 +26,7 @@
     .container {
       text-align: center;
       background: rgba(255, 255, 255, 0.92);
-      padding: 40px 50px;
+      padding: 45px 55px;
       border-radius: 25px;
       box-shadow: 0 15px 40px rgba(0,0,0,0.15);
       z-index: 2;
@@ -41,7 +41,7 @@
 
     .buttons {
       position: relative;
-      height: 130px;
+      height: 140px;
       width: 100%;
     }
 
@@ -54,18 +54,21 @@
       transition: all 0.3s ease;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
       position: absolute;
-      touch-action: manipulation;
     }
 
+    /* 💖 Pulsing Yes button */
     #yesBtn {
       background: #ff4d79;
       color: white;
       left: 50%;
       transform: translateX(-120%);
+      animation: pulse 2.5s infinite;
     }
 
-    #yesBtn:hover {
-      transform: translateX(-120%) scale(1.08);
+    @keyframes pulse {
+      0% { transform: translateX(-120%) scale(1); }
+      50% { transform: translateX(-120%) scale(1.08); }
+      100% { transform: translateX(-120%) scale(1); }
     }
 
     #noBtn {
@@ -75,10 +78,28 @@
       transform: translateX(20%);
     }
 
-    .message {
+    /* 🎬 Final screen fade-in */
+    .finalMessage {
       display: none;
-      font-size: 1.9rem;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 2s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .yay {
+      font-size: 3.2rem;
       color: #ff4d79;
+    }
+
+    .signature {
+      margin-top: 25px;
+      font-size: 1rem;
+      color: #ff7fa0;
+      font-style: italic;
     }
 
     .heart {
@@ -97,7 +118,7 @@
       position: fixed;
       width: 10px;
       height: 10px;
-      animation: confettiFall 3s linear infinite;
+      animation: confettiFall 4s linear infinite;
     }
 
     @keyframes confettiFall {
@@ -124,16 +145,15 @@
 
     @media (max-width: 600px) {
       h1 { font-size: 1.8rem; }
-      .message { font-size: 1.6rem; }
-      .buttons { height: 150px; }
+      .yay { font-size: 2.6rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Hidden YouTube Player (audio only) -->
   <div id="player"></div>
 
+  <!-- QUESTION SCREEN -->
   <div class="container" id="main">
     <h1>Sunu 💕<br>Will you be my Valentine? 💘</h1>
 
@@ -145,55 +165,62 @@
     <div class="hint">🎶 Tap anywhere for music</div>
   </div>
 
-  <div class="container message" id="loveMessage">
-    🌅 Yay Sunu! I don’t wanna look at anybody else now that I saw you 🥰💖
+  <!-- FINAL SCREEN -->
+  <div class="container finalMessage" id="final">
+    <div class="yay">YAYYY 🥳🥳</div>
+    <div class="signature">— always urs 🤍</div>
   </div>
 
-  <!-- YouTube API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
     let player;
+    let volume = 0;
 
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
-        videoId: 'u9raS7-NisU', // Taylor Swift – Daylight
+        videoId: 'u9raS7-NisU',
         playerVars: {
           autoplay: 0,
-          start: 142, // Exact lyric moment
+          start: 142,
           loop: 1,
           playlist: 'u9raS7-NisU'
         }
       });
     }
 
-    // Play music on first interaction (mobile-safe)
+    // 🎶 Music fade-in
     window.addEventListener("click", () => {
       if (player) {
-        player.unMute();
         player.playVideo();
+        player.setVolume(0);
+        const fade = setInterval(() => {
+          if (volume < 60) {
+            volume += 2;
+            player.setVolume(volume);
+          } else {
+            clearInterval(fade);
+          }
+        }, 100);
       }
     }, { once: true });
 
     const noBtn = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
     const main = document.getElementById("main");
-    const loveMessage = document.getElementById("loveMessage");
+    const final = document.getElementById("final");
 
-    // Dodge the No button
     noBtn.addEventListener("mouseenter", () => {
       noBtn.style.left = Math.random() * (window.innerWidth - 120) + "px";
       noBtn.style.top = Math.random() * (window.innerHeight - 120) + "px";
     });
 
-    // Yes button action
     yesBtn.addEventListener("click", () => {
       main.style.display = "none";
-      loveMessage.style.display = "block";
-      confetti();
+      final.style.display = "block";
+      startConfetti();
     });
 
-    // Floating hearts
     function heart() {
       const h = document.createElement("div");
       h.className = "heart";
@@ -205,18 +232,16 @@
     }
     setInterval(heart, 400);
 
-    // Confetti animation
-    function confetti() {
-      for (let i = 0; i < 120; i++) {
+    function startConfetti() {
+      setInterval(() => {
         const c = document.createElement("div");
         c.className = "confetti";
         c.style.left = Math.random() * 100 + "vw";
         c.style.background =
-          ["#ff4d79", "#ffc0cb", "#ffd1dc", "#fff"][Math.floor(Math.random()*4)];
-        c.style.animationDuration = (Math.random() * 2 + 2) + "s";
+          ["#ff4d79", "#ffc0cb", "#ffd1dc", "#fff"][Math.floor(Math.random() * 4)];
         document.body.appendChild(c);
-        setTimeout(() => c.remove(), 3000);
-      }
+        setTimeout(() => c.remove(), 5000);
+      }, 150);
     }
   </script>
 
